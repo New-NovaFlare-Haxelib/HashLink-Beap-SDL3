@@ -3,18 +3,18 @@
 #include "hlsystem.h"
 
 #if defined(HL_IOS) || defined (HL_TVOS)
-#	include <SDL.h>
-#	include <SDL_syswm.h>
+#	include <SDL3/SDL.h>
+#	include <SDL3/SDL_syswm.h>
 #	include <OpenGLES/ES3/gl.h>
 #	define HL_GLES
 #elif defined(HL_MAC)
-#	include <SDL.h>
+#	include <SDL3/SDL.h>
 #	include <OpenGL/gl3.h>
 #	define glBindImageTexture(...) hl_error("Not supported on OSX")
 #	define glDispatchCompute(...) hl_error("Not supported on OSX")
 #	define glMemoryBarrier(...) hl_error("Not supported on OSX")
 #elif defined(_WIN32)
-#	include <SDL.h>
+#	include <SDL3/SDL.h>
 #	include <GL/gl.h>
 #	include <GL/glext.h>
 #elif defined(HL_CONSOLE)
@@ -24,12 +24,12 @@
 #	include <GL/osmesa.h>
 #	define HL_GLES
 #elif defined(HL_ANDROID)
-#	include <SDL.h>
+#	include <SDL3/SDL.h>
 #	include <GLES3/gl32.h>
 #	include <GLES3/gl3ext.h>
 #	define HL_GLES
 #else
-#	include <SDL.h>
+#	include <SDL3/SDL.h>
 #	include <GL/glcorearb.h>
 #endif
 
@@ -434,8 +434,7 @@ HL_PRIM void HL_NAME(gl_bind_framebuffer)( int target, vdynamic *f ) {
 #if	defined(HL_IOS) || defined(HL_TVOS)
 	if ( id==0 ) {
 		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info);
+		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info, SDL_SYSWM_CURRENT_VERSION);
 		id = info.info.uikit.framebuffer;
 	}
 #endif
@@ -484,8 +483,7 @@ HL_PRIM void HL_NAME(gl_bind_renderbuffer)( int target, vdynamic *r ) {
 #if	defined(HL_IOS) || defined(HL_TVOS)
 	if ( id==0 ) {
 		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info);
+		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info, SDL_SYSWM_CURRENT_VERSION);
 		id = info.info.uikit.colorbuffer;
 	}
 #endif

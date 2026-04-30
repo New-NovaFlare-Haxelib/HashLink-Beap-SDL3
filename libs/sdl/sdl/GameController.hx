@@ -37,13 +37,13 @@ class GameController {
 		if( haptic == null && !rumbleInitialized ){
 			rumbleInitialized = true;
 			haptic = hapticOpen(ptr);
-			if( haptic != null && hapticRumbleInit(haptic) != 0 ){
+			if( haptic != null && !hapticRumbleInit(haptic) ){
 				hapticClose(haptic);
 				haptic = null;
 			}
 		}
 		if( haptic == null ) return false;
-		return hapticRumblePlay( haptic, strength, length ) == 0;
+		return hapticRumblePlay( haptic, strength, length );
 	}
 
 	public function close(){
@@ -88,13 +88,11 @@ class GameController {
 	static function hapticClose( haptic : HapticPtr ) : Void {
 	}
 
-	static function hapticRumbleInit( haptic : HapticPtr ) : Int {
-		return -1;
+	static function hapticRumbleInit( haptic : HapticPtr ) : Bool {
+		return false;
 	}
 	
-	static function hapticRumblePlay( haptic : HapticPtr, strength : Float, length : Int ) : Int {
-		return -1;
+	static function hapticRumblePlay( haptic : HapticPtr, strength : Float, length : Int ) : Bool {
+		return false;
 	}
-
-
 }
