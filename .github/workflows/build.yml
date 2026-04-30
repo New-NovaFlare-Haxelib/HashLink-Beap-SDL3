@@ -156,12 +156,30 @@ jobs:
               libmbedtls-dev${SUFFIX} \
               libopenal-dev${SUFFIX} \
               libpng-dev${SUFFIX} \
-              libsdl3-dev \
               libturbojpeg-dev${SUFFIX} \
               libuv1-dev${SUFFIX} \
               libvorbis-dev${SUFFIX} \
               libsqlite3-dev${SUFFIX} \
+              libx11-dev${SUFFIX} \
+              libxext-dev${SUFFIX} \
+              libxrandr-dev${SUFFIX} \
+              libxinerama-dev${SUFFIX} \
+              libxcursor-dev${SUFFIX} \
+              libxi-dev${SUFFIX} \
+              libxfixes-dev${SUFFIX} \
+              libxkbcommon-dev${SUFFIX} \
+              libwayland-dev${SUFFIX} \
+              libdbus-1-dev${SUFFIX} \
+              libpulse-dev${SUFFIX} \
+              libsamplerate0-dev${SUFFIX} \
               ${EXTRA_APT_PKGS}
+
+            # Build SDL3 from source since it's not in Ubuntu repos yet
+            git clone --depth 1 --branch release-3.2.8 https://github.com/libsdl-org/SDL.git /tmp/sdl3
+            cd /tmp/sdl3
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DSDL_STATIC=OFF -DSDL_SHARED=ON
+            sudo cmake --build build --config Release --target install --parallel
+            cd -
             ;;
 
           darwin)
