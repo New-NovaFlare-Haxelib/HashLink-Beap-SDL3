@@ -1,3 +1,0 @@
-[submodule "libs/heaps"]
-	path = libs/heaps
-	url = https://github.com/HeapsIO/heaps.git
