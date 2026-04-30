@@ -410,28 +410,41 @@ HL_PRIM void HL_NAME(delay)( int time ) {
 }
 
 HL_PRIM int HL_NAME(get_screen_width)() {
-	const SDL_DisplayMode *e = SDL_GetCurrentDisplayMode(0);
-	return e ? e->w : 0;
+	SDL_DisplayMode mode;
+	if (SDL_GetCurrentDisplayMode(0, &mode))
+		return mode.w;
+	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_height)() {
-	const SDL_DisplayMode *e = SDL_GetCurrentDisplayMode(0);
-	return e ? e->h : 0;
+	SDL_DisplayMode mode;
+	if (SDL_GetCurrentDisplayMode(0, &mode))
+		return mode.h;
+	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_width_of_window)(SDL_Window* win) {
-	const SDL_DisplayMode *e = SDL_GetCurrentDisplayMode(win != NULL ? SDL_GetDisplayForWindow(win) : 0);
-	return e ? e->w : 0;
+	SDL_DisplayMode mode;
+	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
+	if (SDL_GetCurrentDisplayMode(id, &mode))
+		return mode.w;
+	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_height_of_window)(SDL_Window* win) {
-	const SDL_DisplayMode *e = SDL_GetCurrentDisplayMode(win != NULL ? SDL_GetDisplayForWindow(win) : 0);
-	return e ? e->h : 0;
+	SDL_DisplayMode mode;
+	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
+	if (SDL_GetCurrentDisplayMode(id, &mode))
+		return mode.h;
+	return 0;
 }
 
 HL_PRIM int HL_NAME(get_framerate)(SDL_Window* win) {
-	const SDL_DisplayMode *e = SDL_GetCurrentDisplayMode(win != NULL ? SDL_GetDisplayForWindow(win) : 0);
-	return e ? e->refresh_rate : 0;
+	SDL_DisplayMode mode;
+	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
+	if (SDL_GetCurrentDisplayMode(id, &mode))
+		return mode.refresh_rate;
+	return 0;
 }
 
 HL_PRIM void HL_NAME(message_box)(vbyte *title, vbyte *text, bool error) {
@@ -560,7 +573,7 @@ HL_PRIM SDL_Window *HL_NAME(win_create_ex)(int x, int y, int width, int height, 
 	}
 #	ifdef HL_WIN
 	// force window to show even if the debugger force process windows to be hidden
-	if( win && (SDL_GetWindowFlags(win) & SDL_WINDOW_INPUT_FOCUS) == 0 ) {
+	if( win && (SDL_GetWindowFlags(win) & SDL_WINDOW_MOUSE_CAPTURE) == 0 ) {
 		SDL_HideWindow(win);
 		SDL_ShowWindow(win);
 	}
@@ -581,8 +594,7 @@ HL_PRIM bool HL_NAME(win_set_fullscreen)(SDL_Window *win, int mode) {
 #	ifdef HL_WIN
 	wsave_pos *save = SDL_GetWindowData(win,"save");
 	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(win, &info, SDL_SYSWM_CURRENT_VERSION);
+	SDL_GetWindowWMInfo(win, &info);
 	HWND wnd = info.info.win.window;
 	if( save && mode != 2 ) {
 		// exit borderless
@@ -628,11 +640,12 @@ HL_PRIM bool HL_NAME(win_set_fullscreen)(SDL_Window *win, int mode) {
 
 HL_PRIM bool HL_NAME(win_set_display_mode)(SDL_Window *win, int width, int height, int framerate) {
 	SDL_DisplayID display_id = SDL_GetDisplayForWindow(win);
-	int num_modes = SDL_GetNumDisplayModes(display_id);
+	int num_modes = 0;
+	const SDL_DisplayMode **modes = SDL_GetDisplayModes(display_id, &num_modes);
 	for (int i = 0; i < num_modes; i++) {
-		const SDL_DisplayMode *mode = SDL_GetDisplayMode(display_id, i);
+		const SDL_DisplayMode *mode = modes[i];
 		if (mode && mode->w == width && mode->h == height && mode->refresh_rate == framerate) {
-			return SDL_SetWindowDisplayMode(win, mode);
+			return SDL_SetWindowFullscreenMode(win, mode);
 		}
 	}
 	return false;
@@ -719,8 +732,7 @@ HL_PRIM void HL_NAME(win_raise)(SDL_Window *win) {
 HL_PRIM void HL_NAME(win_swap_window)(SDL_Window *win) {
 #if defined(HL_IOS) || defined(HL_TVOS)
 	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(win, &info, SDL_SYSWM_CURRENT_VERSION);
+	SDL_GetWindowWMInfo(win, &info);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, info.info.uikit.framebuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER,info.info.uikit.colorbuffer);
@@ -738,7 +750,7 @@ HL_PRIM int HL_NAME(win_get_id)(SDL_Window *window) {
 
 HL_PRIM void HL_NAME(win_destroy)(SDL_Window *win, SDL_GLContext gl) {
 	SDL_DestroyWindow(win);
-	SDL_GL_DeleteContext(gl);
+	SDL_GL_DestroyContext(gl);
 }
 
 #define TGL _ABSTRACT(sdl_gl)
@@ -770,7 +782,10 @@ DEFINE_PRIM(_I32, win_get_id, TWIN);
 // game controller (SDL3 uses SDL_Gamepad)
 
 HL_PRIM int HL_NAME(gctrl_count)() {
-	return SDL_GetNumJoysticks();
+	int count = 0;
+	SDL_JoystickID *joysticks = SDL_GetJoysticks(&count);
+	SDL_free(joysticks);
+	return count;
 }
 
 HL_PRIM SDL_Gamepad *HL_NAME(gctrl_open)(int idx) {
@@ -811,24 +826,15 @@ HL_PRIM int HL_NAME(gctrl_player_index)(SDL_Gamepad *ctrl) {
 }
 
 HL_PRIM int HL_NAME(gctrl_product)(SDL_Gamepad *ctrl) {
-	Uint16 vendor, product, version;
-	if (SDL_GetGamepadProductInfo(ctrl, &vendor, &product, &version))
-		return (int)product;
-	return 0;
+	return (int)SDL_GetGamepadProduct(ctrl);
 }
 
 HL_PRIM int HL_NAME(gctrl_vendor)(SDL_Gamepad *ctrl) {
-	Uint16 vendor, product, version;
-	if (SDL_GetGamepadProductInfo(ctrl, &vendor, &product, &version))
-		return (int)vendor;
-	return 0;
+	return (int)SDL_GetGamepadVendor(ctrl);
 }
 
 HL_PRIM int HL_NAME(gctrl_product_version)(SDL_Gamepad *ctrl) {
-	Uint16 vendor, product, version;
-	if (SDL_GetGamepadProductInfo(ctrl, &vendor, &product, &version))
-		return (int)version;
-	return 0;
+	return (int)SDL_GetGamepadProductVersion(ctrl);
 }
 
 HL_PRIM bool HL_NAME(gctrl_rumble)(SDL_Gamepad *ctrl, int low, int high, int duration) {
@@ -896,24 +902,15 @@ HL_PRIM int HL_NAME(joy_player_index)(SDL_Joystick *joy) {
 }
 
 HL_PRIM int HL_NAME(joy_product)(SDL_Joystick *joy) {
-	Uint16 vendor, product, version;
-	if (SDL_GetJoystickProductInfo(joy, &vendor, &product, &version))
-		return (int)product;
-	return 0;
+	return (int)SDL_GetJoystickProduct(joy);
 }
 
 HL_PRIM int HL_NAME(joy_vendor)(SDL_Joystick *joy) {
-	Uint16 vendor, product, version;
-	if (SDL_GetJoystickProductInfo(joy, &vendor, &product, &version))
-		return (int)vendor;
-	return 0;
+	return (int)SDL_GetJoystickVendor(joy);
 }
 
 HL_PRIM int HL_NAME(joy_product_version)(SDL_Joystick *joy) {
-	Uint16 vendor, product, version;
-	if (SDL_GetJoystickProductInfo(joy, &vendor, &product, &version))
-		return (int)version;
-	return 0;
+	return (int)SDL_GetJoystickProductVersion(joy);
 }
 
 // clipboard
@@ -935,12 +932,12 @@ HL_PRIM char *HL_NAME(get_clipboard_text)() {
 // display
 
 HL_PRIM vbyte *HL_NAME(get_displays)() {
-	int n = SDL_GetNumVideoDisplays();
-	hl_scratch_buffer *buf = hl_scratch_alloc(n * 256);
-	vbyte *pos = buf->b;
+	int n = 0;
+	SDL_DisplayID *displays = SDL_GetDisplays(&n);
+	vbyte *buf = (vbyte*)hl_alloc_bytes(n * 256);
+	vbyte *pos = buf;
 	for (int i = 0; i < n; i++) {
-		SDL_DisplayID id = SDL_GetDisplayForIndex(i);
-		const char *name = SDL_GetDisplayName(id);
+		const char *name = SDL_GetDisplayName(displays[i]);
 		if (name) {
 			int len = (int)SDL_strlen(name);
 			memcpy(pos, name, len);
@@ -949,47 +946,122 @@ HL_PRIM vbyte *HL_NAME(get_displays)() {
 		*pos++ = 0;
 	}
 	*pos = 0;
-	return buf->b;
+	SDL_free(displays);
+	return buf;
 }
 
 HL_PRIM vbyte *HL_NAME(get_current_display_mode)(SDL_Window *win) {
-	hl_scratch_buffer *buf = hl_scratch_alloc(256);
-	vbyte *pos = buf->b;
+	vbyte *buf = (vbyte*)hl_alloc_bytes(256);
+	vbyte *pos = buf;
 	SDL_DisplayID display_id = win ? SDL_GetDisplayForWindow(win) : 0;
-	const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(display_id);
-	if (!mode) mode = SDL_GetCurrentDisplayMode(display_id);
-	if (mode) {
-		*(int*)pos = mode->w; pos += 4;
-		*(int*)pos = mode->h; pos += 4;
-		*(int*)pos = mode->refresh_rate; pos += 4;
-		*(int*)pos = mode->format; pos += 4;
+	SDL_DisplayMode mode;
+	if (SDL_GetDesktopDisplayMode(display_id, &mode)) {
+		*(int*)pos = mode.w; pos += 4;
+		*(int*)pos = mode.h; pos += 4;
+		*(int*)pos = mode.refresh_rate; pos += 4;
+		*(int*)pos = mode.format; pos += 4;
+	} else if (SDL_GetCurrentDisplayMode(display_id, &mode)) {
+		*(int*)pos = mode.w; pos += 4;
+		*(int*)pos = mode.h; pos += 4;
+		*(int*)pos = mode.refresh_rate; pos += 4;
+		*(int*)pos = mode.format; pos += 4;
 	}
-	return buf->b;
+	return buf;
+}
+
+HL_PRIM vbyte *HL_NAME(get_display_modes)(int displayId) {
+	vbyte *buf = (vbyte*)hl_alloc_bytes(256 * 32);
+	vbyte *pos = buf;
+	int num_modes = 0;
+	const SDL_DisplayMode **modes = SDL_GetDisplayModes((SDL_DisplayID)displayId, &num_modes);
+	for (int i = 0; i < num_modes && i < 32; i++) {
+		const SDL_DisplayMode *mode = modes[i];
+		if (mode) {
+			*(int*)pos = mode->format; pos += 4;
+			*(int*)pos = mode->w; pos += 4;
+			*(int*)pos = mode->h; pos += 4;
+			*(int*)pos = mode->refresh_rate; pos += 4;
+			*(int*)pos = 0; pos += 4; // padding
+		}
+	}
+	*(int*)pos = 0; pos += 4; // sentinel
+	*(int*)pos = 0; pos += 4;
+	*(int*)pos = 0; pos += 4;
+	*(int*)pos = 0; pos += 4;
+	*(int*)pos = 0; pos += 4;
+	SDL_free(modes);
+	return buf;
+}
+
+HL_PRIM vbyte *HL_NAME(get_devices)() {
+	vbyte *buf = (vbyte*)hl_alloc_bytes(4096);
+	vbyte *pos = buf;
+	int num = SDL_GetNumVideoDrivers();
+	for (int i = 0; i < num; i++) {
+		const char *name = SDL_GetVideoDriver(i);
+		if (name) {
+			int len = (int)SDL_strlen(name);
+			memcpy(pos, name, len);
+			pos += len;
+		}
+		*pos++ = 0;
+	}
+	*pos = 0;
+	return buf;
+}
+
+HL_PRIM bool HL_NAME(set_drag_and_drop_enabled)(bool enable) {
+	return SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, enable ? "1" : "0");
+}
+
+HL_PRIM bool HL_NAME(get_drag_and_drop_enabled)() {
+	const char *val = SDL_GetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH);
+	return val && SDL_strcmp(val, "1") == 0;
 }
 
 // touch
 
 HL_PRIM int HL_NAME(touch_count)() {
-	return SDL_GetNumTouchDevices();
+	int count = 0;
+	SDL_TouchID *touchIds = SDL_GetTouchDevices(&count);
+	SDL_free(touchIds);
+	return count;
 }
 
 HL_PRIM int HL_NAME(touch_get_finger_count)(int idx) {
-	SDL_TouchID touchId = SDL_GetTouchDevice(idx);
-	if (touchId == 0) return 0;
-	return SDL_GetNumTouchFingers(touchId);
+	int count = 0;
+	SDL_TouchID *touchIds = SDL_GetTouchDevices(&count);
+	if (idx >= count) {
+		SDL_free(touchIds);
+		return 0;
+	}
+	SDL_TouchID touchId = touchIds[idx];
+	SDL_free(touchIds);
+	int fingerCount = 0;
+	SDL_Finger **fingers = SDL_GetTouchFingers(touchId, &fingerCount);
+	SDL_free(fingers);
+	return fingerCount;
 }
 
 HL_PRIM void HL_NAME(touch_get_finger)(int touchIdx, int fingerIdx, float *x, float *y, float *dx, float *dy, float *pressure) {
-	SDL_TouchID touchId = SDL_GetTouchDevice(touchIdx);
-	if (touchId == 0) return;
-	SDL_Finger *finger = SDL_GetTouchFinger(touchId, fingerIdx);
-	if (finger) {
-		*x = finger->x;
-		*y = finger->y;
-		*dx = finger->dx;
-		*dy = finger->dy;
-		*pressure = finger->pressure;
+	int count = 0;
+	SDL_TouchID *touchIds = SDL_GetTouchDevices(&count);
+	if (touchIdx >= count) {
+		SDL_free(touchIds);
+		return;
 	}
+	SDL_TouchID touchId = touchIds[touchIdx];
+	SDL_free(touchIds);
+	int fingerCount = 0;
+	SDL_Finger **fingers = SDL_GetTouchFingers(touchId, &fingerCount);
+	if (fingerIdx < fingerCount && fingers[fingerIdx]) {
+		*x = fingers[fingerIdx]->x;
+		*y = fingers[fingerIdx]->y;
+		*dx = 0;
+		*dy = 0;
+		*pressure = fingers[fingerIdx]->pressure;
+	}
+	SDL_free(fingers);
 }
 
 // cursor
@@ -1159,6 +1231,10 @@ DEFINE_PRIM(_BYTES, get_clipboard_text, _NO_ARG);
 
 DEFINE_PRIM(_BYTES, get_displays, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_current_display_mode, TWIN);
+DEFINE_PRIM(_BYTES, get_display_modes, _I32);
+DEFINE_PRIM(_BYTES, get_devices, _NO_ARG);
+DEFINE_PRIM(_BOOL, set_drag_and_drop_enabled, _BOOL);
+DEFINE_PRIM(_BOOL, get_drag_and_drop_enabled, _NO_ARG);
 
 DEFINE_PRIM(_I32, touch_count, _NO_ARG);
 DEFINE_PRIM(_I32, touch_get_finger_count, _I32);

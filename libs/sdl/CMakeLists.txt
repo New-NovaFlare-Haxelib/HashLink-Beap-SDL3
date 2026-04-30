@@ -64,7 +64,7 @@ if(ANDROID)
     target_link_libraries(sdl.hdll GLESv3)
 endif()
 
-if((APPLE OR UNIX) AND NOT ANDROID)
+if(APPLE AND NOT ANDROID)
     find_package(OpenGL REQUIRED)
     target_include_directories(sdl.hdll
         PRIVATE
@@ -73,6 +73,12 @@ if((APPLE OR UNIX) AND NOT ANDROID)
     target_link_libraries(sdl.hdll
         libhl
         ${OPENGL_gl_LIBRARY}
+    )
+endif()
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    target_link_libraries(sdl.hdll
+        libhl
+        GL
     )
 endif()
 

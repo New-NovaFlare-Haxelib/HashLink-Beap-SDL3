@@ -434,7 +434,7 @@ HL_PRIM void HL_NAME(gl_bind_framebuffer)( int target, vdynamic *f ) {
 #if	defined(HL_IOS) || defined(HL_TVOS)
 	if ( id==0 ) {
 		SDL_SysWMinfo info;
-		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info, SDL_SYSWM_CURRENT_VERSION);
+		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info);
 		id = info.info.uikit.framebuffer;
 	}
 #endif
@@ -483,7 +483,7 @@ HL_PRIM void HL_NAME(gl_bind_renderbuffer)( int target, vdynamic *r ) {
 #if	defined(HL_IOS) || defined(HL_TVOS)
 	if ( id==0 ) {
 		SDL_SysWMinfo info;
-		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info, SDL_SYSWM_CURRENT_VERSION);
+		SDL_GetWindowWMInfo(SDL_GL_GetCurrentWindow(), &info);
 		id = info.info.uikit.colorbuffer;
 	}
 #endif
