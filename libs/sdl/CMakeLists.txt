@@ -36,9 +36,9 @@ else()
             )
             # Add SDL3 lib directory based on architecture
             if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-                link_directories(${INCLUDES_BASE_DIR}/sdl/lib/x64)
+                target_link_directories(sdl.hdll PRIVATE ${INCLUDES_BASE_DIR}/sdl/lib/x64)
             else()
-                link_directories(${INCLUDES_BASE_DIR}/sdl/lib/x86)
+                target_link_directories(sdl.hdll PRIVATE ${INCLUDES_BASE_DIR}/sdl/lib/x86)
             endif()
             # SDL3 on Windows needs these libraries
             target_link_libraries(sdl.hdll
