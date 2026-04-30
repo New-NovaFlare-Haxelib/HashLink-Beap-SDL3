@@ -19,19 +19,35 @@ if ((NOT WIN32) AND DOWNLOAD_DEPENDENCIES)
     FetchContent_MakeAvailable(SDL3)
 else()
     if(WIN32)
-        target_include_directories(sdl.hdll
-            PRIVATE
-            ${INCLUDES_BASE_DIR}/gl
+        # On Windows, SDL3 is extracted to include/sdl/ from the CI script
+        # Try to find SDL3 config, or use the include path directly
+        if(EXISTS "${INCLUDES_BASE_DIR}/sdl/SDL3/SDL.h")
+            target_include_directories(sdl.hdll
+                PRIVATE
+                ${INCLUDES_BASE_DIR}/sdl
+                ${INCLUDES_BASE_DIR}/gl
+            )
+            # SDL3 on Windows needs these libraries
+            target_link_libraries(sdl.hdll
+                SDL3
+            )
+        else()
+            find_package(SDL3 REQUIRED)
+            target_link_libraries(sdl.hdll
+                SDL3::SDL3
+            )
+        endif()
+    else()
+        find_package(SDL3 REQUIRED)
+        target_link_libraries(sdl.hdll
+            SDL3::SDL3
         )
     endif()
-
-    find_package(SDL3 REQUIRED)
 endif()
 
 set_as_hdll(sdl)
 target_link_libraries(sdl.hdll
     libhl
-    SDL3::SDL3
 )
 if(APPLE)
     target_compile_definitions(sdl.hdll PRIVATE GL_SILENCE_DEPRECATION)

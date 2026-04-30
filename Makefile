@@ -165,7 +165,7 @@ LIBEXT=dylib
 BREW_PREFIX := $(shell brew --prefix)
 # prefixes for keg-only packages
 BREW_OPENAL_PREFIX := $(shell brew --prefix openal-soft)
-BREW_SDL_PREFIX := $(shell brew --prefix sdl2)
+BREW_SDL_PREFIX := $(shell brew --prefix sdl3 2>/dev/null || echo "/opt/homebrew/opt/sdl3")
 
 CFLAGS += -arch $(ARCH)
 CPPFLAGS += -I include -I $(BREW_PREFIX)/include

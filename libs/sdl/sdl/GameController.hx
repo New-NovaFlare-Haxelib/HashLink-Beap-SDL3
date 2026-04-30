@@ -1,28 +1,29 @@
 package sdl;
 
-private typedef GameControllerPtr = hl.Abstract<"sdl_gamecontroller">;
-private typedef HapticPtr = hl.Abstract<"sdl_haptic">;
+private typedef GamepadPtr = hl.Abstract<"sdl_gamepad">;
 
 @:hlNative("sdl")
 class GameController {
 
-	var ptr : GameControllerPtr;
-	var haptic : HapticPtr;
-	var rumbleInitialized : Bool = false;
+	var ptr : GamepadPtr;
 
 	public var id(get,never) : Int;
 	public var name(get,never) : String;
+	public var playerIndex(get,never) : Int;
+	public var product(get,never) : Int;
+	public var vendor(get,never) : Int;
+	public var productVersion(get,never) : Int;
 
 	public function new( index : Int ){
 		ptr = gctrlOpen( index );
 	}
 
 	public inline function getAxis( axisId : Int ){
-		return gctrlGetAxis(ptr,axisId);
+		return gctrlGetAxis(ptr, axisId);
 	}
 
 	public inline function getButton( btnId : Int ){
-		return gctrlGetButton(ptr,btnId);
+		return gctrlGetButton(ptr, btnId);
 	}
 
 	public inline function get_id() : Int {
@@ -33,66 +34,42 @@ class GameController {
 		return @:privateAccess String.fromUTF8( gctrlGetName(ptr) );
 	}
 
-	public function rumble( strength : Float, length : Int ) : Bool {
-		if( haptic == null && !rumbleInitialized ){
-			rumbleInitialized = true;
-			haptic = hapticOpen(ptr);
-			if( haptic != null && !hapticRumbleInit(haptic) ){
-				hapticClose(haptic);
-				haptic = null;
-			}
-		}
-		if( haptic == null ) return false;
-		return hapticRumblePlay( haptic, strength, length );
+	public inline function get_playerIndex() : Int {
+		return gctrlPlayerIndex(ptr);
+	}
+
+	public inline function get_product() : Int {
+		return gctrlProduct(ptr);
+	}
+
+	public inline function get_vendor() : Int {
+		return gctrlVendor(ptr);
+	}
+
+	public inline function get_productVersion() : Int {
+		return gctrlProductVersion(ptr);
+	}
+
+	public function rumble( lowFreq : Int, highFreq : Int, durationMs : Int ) : Bool {
+		return gctrlRumble(ptr, lowFreq, highFreq, durationMs);
 	}
 
 	public function close(){
-		if( haptic != null )
-			hapticClose(haptic);
-		haptic = null;
 		gctrlClose( ptr );
 		ptr = null;
 	}
 
-	static function gctrlCount() : Int {
-		return 0;
-	}
-
-	static function gctrlOpen( idx : Int ) : GameControllerPtr {
-		return null;
-	}
-
-	static function gctrlClose( controller : GameControllerPtr ){
-	}
-
-	static function gctrlGetAxis( controller : GameControllerPtr, axisId : Int ) : Int {
-		return 0;
-	}
-
-	static function gctrlGetButton( controller : GameControllerPtr, btnId : Int ) : Bool {
-		return false;
-	}
-
-	static function gctrlGetId( controller : GameControllerPtr ) : Int {
-		return -1;
-	}
-
-	static function gctrlGetName( controller : GameControllerPtr ) : hl.Bytes {
-		return null;
-	}
-
-	static function hapticOpen( controller : GameControllerPtr ) : HapticPtr {
-		return null;
-	}
-
-	static function hapticClose( haptic : HapticPtr ) : Void {
-	}
-
-	static function hapticRumbleInit( haptic : HapticPtr ) : Bool {
-		return false;
-	}
-	
-	static function hapticRumblePlay( haptic : HapticPtr, strength : Float, length : Int ) : Bool {
-		return false;
-	}
+	// Native bindings
+	static function gctrlCount() : Int { return 0; }
+	static function gctrlOpen( idx : Int ) : GamepadPtr { return null; }
+	static function gctrlClose( controller : GamepadPtr ) {}
+	static function gctrlGetAxis( controller : GamepadPtr, axisId : Int ) : Int { return 0; }
+	static function gctrlGetButton( controller : GamepadPtr, btnId : Int ) : Bool { return false; }
+	static function gctrlGetId( controller : GamepadPtr ) : Int { return -1; }
+	static function gctrlGetName( controller : GamepadPtr ) : hl.Bytes { return null; }
+	static function gctrlPlayerIndex( controller : GamepadPtr ) : Int { return -1; }
+	static function gctrlProduct( controller : GamepadPtr ) : Int { return 0; }
+	static function gctrlVendor( controller : GamepadPtr ) : Int { return 0; }
+	static function gctrlProductVersion( controller : GamepadPtr ) : Int { return 0; }
+	static function gctrlRumble( controller : GamepadPtr, low : Int, high : Int, duration : Int ) : Bool { return false; }
 }

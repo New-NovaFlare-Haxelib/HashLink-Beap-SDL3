@@ -20,13 +20,12 @@ enum abstract CursorKind(Int) {
 @:hlNative("sdl")
 abstract Cursor(CursorPtr) {
 
-
-	@:hlNative("sdl", "cursor_create")
+	@:hlNative("sdl", "create_cursor")
 	public static function create( surface : Surface, hotX : Int, hotY : Int ) : Cursor {
 		return null;
 	}
 
-	@:hlNative("sdl", "cursor_create_system")
+	@:hlNative("sdl", "create_system_cursor")
 	public static function createSystem( kind : CursorKind ) : Cursor {
 		return null;
 	}
@@ -40,10 +39,14 @@ abstract Cursor(CursorPtr) {
 	}
 
 	@:hlNative("sdl", "show_cursor")
-	public static function show( v : Bool ) {
+	public static function show() {
 	}
 
-	@:hlNative("sdl", "is_cursor_visible")
+	@:hlNative("sdl", "hide_cursor")
+	public static function hide() {
+	}
+
+	@:hlNative("sdl", "cursor_showing")
 	public static function isVisible() : Bool {
 		return false;
 	}
@@ -54,5 +57,4 @@ abstract Cursor(CursorPtr) {
 
 	static function freeCursor( ptr : CursorPtr ) {
 	}
-
 }

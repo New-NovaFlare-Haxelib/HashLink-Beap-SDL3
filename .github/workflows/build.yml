@@ -160,26 +160,30 @@ jobs:
               libuv1-dev${SUFFIX} \
               libvorbis-dev${SUFFIX} \
               libsqlite3-dev${SUFFIX} \
-              libx11-dev${SUFFIX} \
-              libxext-dev${SUFFIX} \
-              libxrandr-dev${SUFFIX} \
-              libxinerama-dev${SUFFIX} \
-              libxcursor-dev${SUFFIX} \
-              libxi-dev${SUFFIX} \
-              libxfixes-dev${SUFFIX} \
-              libxkbcommon-dev${SUFFIX} \
-              libwayland-dev${SUFFIX} \
-              libdbus-1-dev${SUFFIX} \
-              libpulse-dev${SUFFIX} \
-              libsamplerate0-dev${SUFFIX} \
               ${EXTRA_APT_PKGS}
 
-            # Build SDL3 from source since it's not in Ubuntu repos yet
-            git clone --depth 1 --branch release-3.2.8 https://github.com/libsdl-org/SDL.git /tmp/sdl3
-            cd /tmp/sdl3
-            cmake -B build -DCMAKE_BUILD_TYPE=Release -DSDL_STATIC=OFF -DSDL_SHARED=ON
-            sudo cmake --build build --config Release --target install --parallel
-            cd -
+            # Build SDL3 from source (only on 64-bit; 32-bit skips SDL)
+            if [ ${{matrix.architecture}} != 32 ]; then
+              sudo apt-get install --no-install-recommends -y \
+                libx11-dev \
+                libxext-dev \
+                libxrandr-dev \
+                libxinerama-dev \
+                libxcursor-dev \
+                libxi-dev \
+                libxfixes-dev \
+                libxkbcommon-dev \
+                libwayland-dev \
+                libdbus-1-dev \
+                libpulse-dev \
+                libsamplerate0-dev
+
+              git clone --depth 1 --branch release-3.2.8 https://github.com/libsdl-org/SDL.git /tmp/sdl3
+              cd /tmp/sdl3
+              cmake -B build -DCMAKE_BUILD_TYPE=Release -DSDL_STATIC=OFF -DSDL_SHARED=ON
+              sudo cmake --build build --config Release --target install --parallel
+              cd -
+            fi
             ;;
 
           darwin)
@@ -203,10 +207,19 @@ jobs:
             curl -fsSL --retry 3 --retry-delay 5 -o /tmp/openal.zip https://github.com/kcat/openal-soft/releases/download/1.23.1/openal-soft-1.23.1-bin.zip
             curl -fsSL --retry 3 --retry-delay 5 -o /tmp/ffmpeg.zip ${{ matrix.ffmpeg_url }}
 
-            
-            7z x /tmp/sdl.zip    -oinclude; mv include/SDL3*   include/sdl
-            7z x /tmp/openal.zip -oinclude; mv include/openal* include/openal
-            7z x /tmp/ffmpeg.zip -oinclude; mv include/ffmpeg* include/ffmpeg
+            # Extract SDL3 - zip contains SDL3-3.2.8/ folder
+            7z x /tmp/sdl.zip -o/tmp/sdl_extract
+            mkdir -p include/sdl
+            if [ -d "/tmp/sdl_extract/SDL3-3.2.8" ]; then
+              cp -r /tmp/sdl_extract/SDL3-3.2.8/include/* include/sdl/
+              if [ -d "/tmp/sdl_extract/SDL3-3.2.8/cmake" ]; then
+                cp -r /tmp/sdl_extract/SDL3-3.2.8/cmake include/sdl/
+              fi
+            else
+              mv /tmp/sdl_extract/SDL3* include/sdl
+            fi
+            7z x /tmp/openal.zip -oinclude/openal
+            7z x /tmp/ffmpeg.zip -oinclude/ffmpeg
             ;;
         esac
 
