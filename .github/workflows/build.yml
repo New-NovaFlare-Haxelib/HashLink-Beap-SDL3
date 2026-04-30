@@ -212,12 +212,33 @@ jobs:
             7z x /tmp/sdl.zip -o/tmp/sdl_extract
             mkdir -p include/sdl
             if [ -d "/tmp/sdl_extract/SDL3-3.2.8" ]; then
-              cp -r /tmp/sdl_extract/SDL3-3.2.8/include/* include/sdl/
-              if [ -d "/tmp/sdl_extract/SDL3-3.2.8/cmake" ]; then
-                cp -r /tmp/sdl_extract/SDL3-3.2.8/cmake include/sdl/
+              SDL3_DIR=/tmp/sdl_extract/SDL3-3.2.8
+              # VC zip: include/ is at top level
+              if [ -d "$SDL3_DIR/include" ]; then
+                cp -r "$SDL3_DIR/include/"* include/sdl/
               fi
-              if [ -d "/tmp/sdl_extract/SDL3-3.2.8/lib" ]; then
-                cp -r /tmp/sdl_extract/SDL3-3.2.8/lib include/sdl/
+              # MinGW zip: include/ is under a triple-prefixed directory
+              if [ -d "$SDL3_DIR/x86_64-w64-mingw32" ]; then
+                cp -r "$SDL3_DIR/x86_64-w64-mingw32/include/"* include/sdl/
+                mkdir -p include/sdl/lib/x64
+                cp -r "$SDL3_DIR/x86_64-w64-mingw32/lib/"* include/sdl/lib/x64/
+                if [ -d "$SDL3_DIR/x86_64-w64-mingw32/bin" ]; then
+                  cp "$SDL3_DIR/x86_64-w64-mingw32/bin/SDL3.dll" include/sdl/lib/x64/
+                fi
+              fi
+              if [ -d "$SDL3_DIR/i686-w64-mingw32" ]; then
+                cp -r "$SDL3_DIR/i686-w64-mingw32/include/"* include/sdl/
+                mkdir -p include/sdl/lib/x86
+                cp -r "$SDL3_DIR/i686-w64-mingw32/lib/"* include/sdl/lib/x86/
+                if [ -d "$SDL3_DIR/i686-w64-mingw32/bin" ]; then
+                  cp "$SDL3_DIR/i686-w64-mingw32/bin/SDL3.dll" include/sdl/lib/x86/
+                fi
+              fi
+              if [ -d "$SDL3_DIR/cmake" ]; then
+                cp -r "$SDL3_DIR/cmake" include/sdl/
+              fi
+              if [ -d "$SDL3_DIR/lib" ]; then
+                cp -r "$SDL3_DIR/lib" include/sdl/
               fi
             else
               mv /tmp/sdl_extract/SDL3* include/sdl

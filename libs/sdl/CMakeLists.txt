@@ -17,6 +17,13 @@ if ((NOT WIN32) AND DOWNLOAD_DEPENDENCIES)
         set(SDL_STATIC_PIC ON CACHE INTERNAL "")
     endif()
     FetchContent_MakeAvailable(SDL3)
+    target_include_directories(sdl.hdll
+        PRIVATE
+        ${INCLUDES_BASE_DIR}/gl
+    )
+    target_link_libraries(sdl.hdll
+        SDL3::SDL3
+    )
 else()
     if(WIN32)
         # On Windows, SDL3 is extracted to include/sdl/ from the CI script
@@ -45,6 +52,10 @@ else()
         endif()
     else()
         find_package(SDL3 REQUIRED)
+        target_include_directories(sdl.hdll
+            PRIVATE
+            ${INCLUDES_BASE_DIR}/gl
+        )
         target_link_libraries(sdl.hdll
             SDL3::SDL3
         )
