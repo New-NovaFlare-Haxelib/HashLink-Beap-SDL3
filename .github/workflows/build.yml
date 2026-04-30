@@ -176,7 +176,8 @@ jobs:
                 libwayland-dev \
                 libdbus-1-dev \
                 libpulse-dev \
-                libsamplerate0-dev
+                libsamplerate0-dev \
+                libgl-dev
 
               git clone --depth 1 --branch release-3.2.8 https://github.com/libsdl-org/SDL.git /tmp/sdl3
               cd /tmp/sdl3
@@ -218,8 +219,28 @@ jobs:
             else
               mv /tmp/sdl_extract/SDL3* include/sdl
             fi
-            7z x /tmp/openal.zip -oinclude/openal
-            7z x /tmp/ffmpeg.zip -oinclude/ffmpeg
+
+            # Extract OpenAL - zip contains openal-soft-1.23.1-bin/ folder
+            7z x /tmp/openal.zip -o/tmp/openal_extract
+            mkdir -p include/openal
+            if [ -d "/tmp/openal_extract/openal-soft-1.23.1-bin" ]; then
+              cp -r /tmp/openal_extract/openal-soft-1.23.1-bin/include include/openal/
+              cp -r /tmp/openal_extract/openal-soft-1.23.1-bin/libs include/openal/
+              cp -r /tmp/openal_extract/openal-soft-1.23.1-bin/bin include/openal/
+            else
+              mv /tmp/openal_extract/openal-soft* include/openal
+            fi
+
+            # Extract ffmpeg - zip contains a folder with include/ and lib/
+            7z x /tmp/ffmpeg.zip -o/tmp/ffmpeg_extract
+            mkdir -p include/ffmpeg
+            FFMPEG_DIR=$(ls /tmp/ffmpeg_extract/ | head -1)
+            if [ -n "$FFMPEG_DIR" ] && [ -d "/tmp/ffmpeg_extract/$FFMPEG_DIR" ]; then
+              cp -r /tmp/ffmpeg_extract/$FFMPEG_DIR/include include/ffmpeg/
+              cp -r /tmp/ffmpeg_extract/$FFMPEG_DIR/lib include/ffmpeg/
+            else
+              mv /tmp/ffmpeg_extract/* include/ffmpeg/
+            fi
             ;;
         esac
 
