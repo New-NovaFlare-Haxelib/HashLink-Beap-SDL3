@@ -410,40 +410,40 @@ HL_PRIM void HL_NAME(delay)( int time ) {
 }
 
 HL_PRIM int HL_NAME(get_screen_width)() {
-	SDL_DisplayMode mode;
-	if (SDL_GetCurrentDisplayMode(0, &mode))
-		return mode.w;
+	const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(0);
+	if (mode)
+		return mode->w;
 	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_height)() {
-	SDL_DisplayMode mode;
-	if (SDL_GetCurrentDisplayMode(0, &mode))
-		return mode.h;
+	const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(0);
+	if (mode)
+		return mode->h;
 	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_width_of_window)(SDL_Window* win) {
-	SDL_DisplayMode mode;
 	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
-	if (SDL_GetCurrentDisplayMode(id, &mode))
-		return mode.w;
+	const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(id);
+	if (mode)
+		return mode->w;
 	return 0;
 }
 
 HL_PRIM int HL_NAME(get_screen_height_of_window)(SDL_Window* win) {
-	SDL_DisplayMode mode;
 	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
-	if (SDL_GetCurrentDisplayMode(id, &mode))
-		return mode.h;
+	const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(id);
+	if (mode)
+		return mode->h;
 	return 0;
 }
 
 HL_PRIM int HL_NAME(get_framerate)(SDL_Window* win) {
-	SDL_DisplayMode mode;
 	SDL_DisplayID id = win ? SDL_GetDisplayForWindow(win) : 0;
-	if (SDL_GetCurrentDisplayMode(id, &mode))
-		return mode.refresh_rate;
+	const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(id);
+	if (mode)
+		return (int)mode->refresh_rate;
 	return 0;
 }
 
@@ -562,8 +562,7 @@ HL_PRIM SDL_Window *HL_NAME(win_create_ex)(int x, int y, int width, int height, 
 	}
 
 #ifdef	HL_MOBILE
-	SDL_DisplayMode displayMode;
-	SDL_GetDesktopDisplayMode(0, &displayMode);
+	const SDL_DisplayMode *displayMode = SDL_GetDesktopDisplayMode(0);
 	SDL_Window* win = SDL_CreateWindow("", width, height, SDL_WINDOW_BORDERLESS | sdlFlags);
 #else
 	SDL_Window* win = SDL_CreateWindow("", width, height, sdlFlags);
@@ -641,13 +640,15 @@ HL_PRIM bool HL_NAME(win_set_fullscreen)(SDL_Window *win, int mode) {
 HL_PRIM bool HL_NAME(win_set_display_mode)(SDL_Window *win, int width, int height, int framerate) {
 	SDL_DisplayID display_id = SDL_GetDisplayForWindow(win);
 	int num_modes = 0;
-	const SDL_DisplayMode **modes = SDL_GetDisplayModes(display_id, &num_modes);
+	SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(display_id, &num_modes);
 	for (int i = 0; i < num_modes; i++) {
 		const SDL_DisplayMode *mode = modes[i];
-		if (mode && mode->w == width && mode->h == height && mode->refresh_rate == framerate) {
+		if (mode && mode->w == width && mode->h == height && (int)mode->refresh_rate == framerate) {
+			SDL_free(modes);
 			return SDL_SetWindowFullscreenMode(win, mode);
 		}
 	}
+	SDL_free(modes);
 	return false;
  }
 
@@ -954,17 +955,13 @@ HL_PRIM vbyte *HL_NAME(get_current_display_mode)(SDL_Window *win) {
 	vbyte *buf = (vbyte*)hl_alloc_bytes(256);
 	vbyte *pos = buf;
 	SDL_DisplayID display_id = win ? SDL_GetDisplayForWindow(win) : 0;
-	SDL_DisplayMode mode;
-	if (SDL_GetDesktopDisplayMode(display_id, &mode)) {
-		*(int*)pos = mode.w; pos += 4;
-		*(int*)pos = mode.h; pos += 4;
-		*(int*)pos = mode.refresh_rate; pos += 4;
-		*(int*)pos = mode.format; pos += 4;
-	} else if (SDL_GetCurrentDisplayMode(display_id, &mode)) {
-		*(int*)pos = mode.w; pos += 4;
-		*(int*)pos = mode.h; pos += 4;
-		*(int*)pos = mode.refresh_rate; pos += 4;
-		*(int*)pos = mode.format; pos += 4;
+	const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(display_id);
+	if (!mode) mode = SDL_GetCurrentDisplayMode(display_id);
+	if (mode) {
+		*(int*)pos = mode->w; pos += 4;
+		*(int*)pos = mode->h; pos += 4;
+		*(int*)pos = (int)mode->refresh_rate; pos += 4;
+		*(int*)pos = (int)mode->format; pos += 4;
 	}
 	return buf;
 }
@@ -973,14 +970,14 @@ HL_PRIM vbyte *HL_NAME(get_display_modes)(int displayId) {
 	vbyte *buf = (vbyte*)hl_alloc_bytes(256 * 32);
 	vbyte *pos = buf;
 	int num_modes = 0;
-	const SDL_DisplayMode **modes = SDL_GetDisplayModes((SDL_DisplayID)displayId, &num_modes);
+	SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes((SDL_DisplayID)displayId, &num_modes);
 	for (int i = 0; i < num_modes && i < 32; i++) {
 		const SDL_DisplayMode *mode = modes[i];
 		if (mode) {
-			*(int*)pos = mode->format; pos += 4;
+			*(int*)pos = (int)mode->format; pos += 4;
 			*(int*)pos = mode->w; pos += 4;
 			*(int*)pos = mode->h; pos += 4;
-			*(int*)pos = mode->refresh_rate; pos += 4;
+			*(int*)pos = (int)mode->refresh_rate; pos += 4;
 			*(int*)pos = 0; pos += 4; // padding
 		}
 	}
