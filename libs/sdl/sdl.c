@@ -6,10 +6,6 @@
 #include <locale.h>
 #include <SDL3/SDL.h>
 
-#if defined(HL_WIN) || defined(HL_IOS) || defined(HL_TVOS)
-#	include <SDL3/SDL_syswm.h>
-#endif
-
 #if defined (HL_IOS) || defined(HL_TVOS)
 #	include <OpenGLES/ES3/gl.h>
 #	include <OpenGLES/ES3/glext.h>
@@ -592,9 +588,8 @@ HL_PRIM SDL_GLContext HL_NAME(win_get_glcontext)(SDL_Window *win) {
 HL_PRIM bool HL_NAME(win_set_fullscreen)(SDL_Window *win, int mode) {
 #	ifdef HL_WIN
 	wsave_pos *save = SDL_GetWindowData(win,"save");
-	SDL_SysWMinfo info;
-	SDL_GetWindowWMInfo(win, &info);
-	HWND wnd = info.info.win.window;
+	SDL_PropertiesID props = SDL_GetWindowProperties(win);
+	HWND wnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 	if( save && mode != 2 ) {
 		// exit borderless
 		SetWindowLong(wnd,GWL_STYLE,save->style);
@@ -732,11 +727,11 @@ HL_PRIM void HL_NAME(win_raise)(SDL_Window *win) {
 
 HL_PRIM void HL_NAME(win_swap_window)(SDL_Window *win) {
 #if defined(HL_IOS) || defined(HL_TVOS)
-	SDL_SysWMinfo info;
-	SDL_GetWindowWMInfo(win, &info);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, info.info.uikit.framebuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER,info.info.uikit.colorbuffer);
+	SDL_PropertiesID props = SDL_GetWindowProperties(win);
+	GLuint framebuffer = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_FRAMEBUFFER_NUMBER, 0);
+	GLuint colorbuffer = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_RENDERBUFFER_NUMBER, 0);
+	if (framebuffer) glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	if (colorbuffer) glBindRenderbuffer(GL_RENDERBUFFER, colorbuffer);
 #endif
 	SDL_GL_SwapWindow(win);
 }
