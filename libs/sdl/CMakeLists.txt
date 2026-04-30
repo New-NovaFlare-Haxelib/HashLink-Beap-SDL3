@@ -7,7 +7,7 @@ if ((NOT WIN32) AND DOWNLOAD_DEPENDENCIES)
     FetchContent_Declare(
         SDL3
         URL https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8.tar.gz
-        URL_HASH SHA256=9c5b6b2f5b0e4e2e5b5b5b5b5b5b5b5b5b5b5b5b
+        URL_HASH SHA256=13388fabb361de768ecdf2b65e52bb27d1054cae6ccb6942ba926e378e00db03
         EXCLUDE_FROM_ALL
     )
     set(SDL_TESTS OFF CACHE INTERNAL "")
@@ -27,6 +27,12 @@ else()
                 ${INCLUDES_BASE_DIR}/sdl
                 ${INCLUDES_BASE_DIR}/gl
             )
+            # Add SDL3 lib directory based on architecture
+            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+                link_directories(${INCLUDES_BASE_DIR}/sdl/lib/x64)
+            else()
+                link_directories(${INCLUDES_BASE_DIR}/sdl/lib/x86)
+            endif()
             # SDL3 on Windows needs these libraries
             target_link_libraries(sdl.hdll
                 SDL3

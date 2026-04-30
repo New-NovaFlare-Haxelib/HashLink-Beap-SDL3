@@ -216,6 +216,9 @@ jobs:
               if [ -d "/tmp/sdl_extract/SDL3-3.2.8/cmake" ]; then
                 cp -r /tmp/sdl_extract/SDL3-3.2.8/cmake include/sdl/
               fi
+              if [ -d "/tmp/sdl_extract/SDL3-3.2.8/lib" ]; then
+                cp -r /tmp/sdl_extract/SDL3-3.2.8/lib include/sdl/
+              fi
             else
               mv /tmp/sdl_extract/SDL3* include/sdl
             fi
