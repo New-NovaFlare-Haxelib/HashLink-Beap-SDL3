@@ -478,12 +478,12 @@ HL_PRIM bool HL_NAME(get_relative_mouse_mode)() {
 	return false;
 }
 
-HL_PRIM bool HL_NAME(capture_mouse)(bool enable) {
-	return SDL_CaptureMouse(enable);
+HL_PRIM int HL_NAME(capture_mouse)(bool enable) {
+	return SDL_CaptureMouse(enable) ? 0 : -1;
 }
 
-HL_PRIM bool HL_NAME(warp_mouse_global)(int x, int y) {
-	return SDL_WarpMouseGlobal((float)x, (float)y);
+HL_PRIM int HL_NAME(warp_mouse_global)(int x, int y) {
+	return SDL_WarpMouseGlobal((float)x, (float)y) ? 0 : -1;
 }
 
 HL_PRIM void HL_NAME(warp_mouse_in_window)(SDL_Window* window, int x, int y) {
@@ -536,8 +536,8 @@ DEFINE_PRIM(_BOOL, detect_win32, _NO_ARG);
 DEFINE_PRIM(_VOID, text_input, TWIN _BOOL);
 DEFINE_PRIM(_BOOL, set_relative_mouse_mode, _BOOL);
 DEFINE_PRIM(_BOOL, get_relative_mouse_mode, _NO_ARG);
-DEFINE_PRIM(_BOOL, capture_mouse, _BOOL);
-DEFINE_PRIM(_BOOL, warp_mouse_global, _I32 _I32);
+DEFINE_PRIM(_I32, capture_mouse, _BOOL);
+DEFINE_PRIM(_I32, warp_mouse_global, _I32 _I32);
 DEFINE_PRIM(_VOID, warp_mouse_in_window, TWIN _I32 _I32);
 DEFINE_PRIM(_VOID, set_window_grab, TWIN _BOOL);
 DEFINE_PRIM(_BOOL, get_window_grab, TWIN);
@@ -695,8 +695,8 @@ HL_PRIM double HL_NAME(win_get_opacity)(SDL_Window *win) {
 	return (double)SDL_GetWindowOpacity(win);
 }
 
-HL_PRIM bool HL_NAME(win_set_opacity)(SDL_Window *win, double opacity) {
-	return SDL_SetWindowOpacity(win, (float)opacity);
+HL_PRIM bool HL_NAME(win_set_opacity)(SDL_Window *win, float opacity) {
+	return SDL_SetWindowOpacity(win, opacity);
 }
 
 HL_PRIM void HL_NAME(win_resize)(SDL_Window *win, int mode) {
@@ -769,7 +769,7 @@ DEFINE_PRIM(_VOID, win_get_size, TWIN _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_VOID, win_get_min_size, TWIN _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_VOID, win_get_max_size, TWIN _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_F64, win_get_opacity, TWIN);
-DEFINE_PRIM(_BOOL, win_set_opacity, TWIN _F64);
+DEFINE_PRIM(_BOOL, win_set_opacity, TWIN _F32);
 DEFINE_PRIM(_VOID, win_swap_window, TWIN);
 DEFINE_PRIM(_VOID, win_render_to, TWIN TGL);
 DEFINE_PRIM(_VOID, win_destroy, TWIN TGL);
@@ -911,8 +911,8 @@ HL_PRIM int HL_NAME(joy_product_version)(SDL_Joystick *joy) {
 
 // clipboard
 
-HL_PRIM void HL_NAME(set_clipboard_text)(vbyte *text) {
-	SDL_SetClipboardText((char*)text);
+HL_PRIM bool HL_NAME(set_clipboard_text)(vbyte *text) {
+	return SDL_SetClipboardText((char*)text);
 }
 
 HL_PRIM char *HL_NAME(get_clipboard_text)() {
@@ -1002,8 +1002,8 @@ HL_PRIM vbyte *HL_NAME(get_devices)() {
 	return buf;
 }
 
-HL_PRIM bool HL_NAME(set_drag_and_drop_enabled)(bool enable) {
-	return SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, enable ? "1" : "0");
+HL_PRIM void HL_NAME(set_drag_and_drop_enabled)(bool enable) {
+	SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, enable ? "1" : "0");
 }
 
 HL_PRIM bool HL_NAME(get_drag_and_drop_enabled)() {
@@ -1218,14 +1218,14 @@ DEFINE_PRIM(_I32, joy_product, _ABSTRACT(sdl_joystick));
 DEFINE_PRIM(_I32, joy_vendor, _ABSTRACT(sdl_joystick));
 DEFINE_PRIM(_I32, joy_product_version, _ABSTRACT(sdl_joystick));
 
-DEFINE_PRIM(_VOID, set_clipboard_text, _BYTES);
+DEFINE_PRIM(_BOOL, set_clipboard_text, _BYTES);
 DEFINE_PRIM(_BYTES, get_clipboard_text, _NO_ARG);
 
 DEFINE_PRIM(_BYTES, get_displays, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_current_display_mode, TWIN);
 DEFINE_PRIM(_BYTES, get_display_modes, _I32);
 DEFINE_PRIM(_BYTES, get_devices, _NO_ARG);
-DEFINE_PRIM(_BOOL, set_drag_and_drop_enabled, _BOOL);
+DEFINE_PRIM(_VOID, set_drag_and_drop_enabled, _BOOL);
 DEFINE_PRIM(_BOOL, get_drag_and_drop_enabled, _NO_ARG);
 
 DEFINE_PRIM(_I32, touch_count, _NO_ARG);
