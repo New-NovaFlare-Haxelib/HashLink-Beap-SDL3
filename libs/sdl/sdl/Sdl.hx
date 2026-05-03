@@ -208,7 +208,7 @@ class Sdl {
 		return null;
 	}
 
-	static function get_devices() : hl.NativeArray<hl.Bytes> {
+	static function get_devices() : hl.Bytes {
 		return null;
 	}
 
